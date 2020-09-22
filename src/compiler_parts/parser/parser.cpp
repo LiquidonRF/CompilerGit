@@ -739,9 +739,9 @@ SyntaxNode *Parser::parseOperator(SyntaxNode *localRoot, SyntaxNode *identifier,
 	}
 	else if (m_currToken->tokenClass == TokenClass::LSquareBracket) 
 	{
+		SyntaxNodeType search = getIdentTypeFromIdentTable(identifier->getToken()->lexema);
 		nextToken();
 		checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
-		SyntaxNodeType search = getIdentTypeFromIdentTable(m_currToken->lexema);
 		
 		if (search == SyntaxNodeType::ARRAY || search == SyntaxNodeType::STRLITERAL)
 		{

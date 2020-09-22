@@ -47,6 +47,7 @@ private:
 	void invertLogicOperator(SyntaxNode *node);
 	void genPrint(SyntaxNode *node);
 	void genWhile(SyntaxNode *node);
+	void genArray(SyntaxNode *node);
 	void dumpAsmToFile();
 
 public:

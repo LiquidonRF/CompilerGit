@@ -12,6 +12,14 @@ bool CodeGen::haveInVarTable(SyntaxNode *node)
 
 std::string CodeGen::getAddrFromVarTable(SyntaxNode *node)
 {
+	if (node->getChildren()->size() != 0 &&
+		node->getChildren()->at(0)->getType() == SyntaxNodeType::INDEX)
+	{
+		auto search = m_varTable->find(node->getToken()->lexema + "[" + 
+			node->getChildren()->at(0)->getToken()->lexema + "]");
+
+		return search->second;
+	}
 	auto search = m_varTable->find(node->getToken()->lexema);
 
 	return search->second;
@@ -73,6 +81,8 @@ void CodeGen::generate(SyntaxNode *node)
 	case SyntaxNodeType::PRINT:
 		genPrint(node);
 		break;
+	case SyntaxNodeType::ARRAY:
+		genArray(node);
 	default:
 		break;
 	}
@@ -120,6 +130,29 @@ void CodeGen::genAssign(SyntaxNode *node)
 		{
 			genUnaryOperator(getAddrFromVarTable(node->getChildren()->at(0)), node->getChildren()->at(1));
 		}
+	}
+}
+
+void CodeGen::genArray(SyntaxNode *node)
+{
+	size_t i = 0;
+	for (size_t iter = 0; iter < node->getChildren()->size(); iter++)
+	{
+		m_countRBP += 4;
+		std::string addres;
+		if (node->getChildren()->at(iter)->getToken()->tokenClass == TokenClass::Identifier)
+		{
+			addres = getAddrFromVarTable(node->getChildren()->at(iter));
+			m_dotText->push_back("\t\tmovl    " + addres + ", %eax\n");
+			m_dotText->push_back("\t\tmovl    %eax, -" + std::to_string(m_countRBP) + "(%rbp)\n");
+			m_varTable->insert({ node->getToken()->lexema + "[" + std::to_string(i) + "]", "-" + std::to_string(m_countRBP) + "(%rbp)"});
+		}
+		else {
+			addres = "$" + node->getChildren()->at(iter)->getToken()->lexema;
+			m_dotText->push_back("\t\tmovl    " + addres + ", -" + std::to_string(m_countRBP) + "(%rbp)\n");
+			m_varTable->insert({ node->getToken()->lexema + "[" + std::to_string(i) + "]", "-" + std::to_string(m_countRBP) + "(%rbp)" });
+		}
+		i++;
 	}
 }
 

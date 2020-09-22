@@ -1,4 +1,3 @@
-#pragma once
 #include "../parser/parser.h"
 #include <map>
 
@@ -44,7 +43,7 @@ private:
 	void genIf(SyntaxNode *node);
 	void genLogicOperator(std::string addresTrue, std::string addresFalse, SyntaxNode *oper, bool isWhile);
 	void performLogicOperator(std::string operand1, std::string operand2, SyntaxNode *oper);
-	void performLogicOperatorChar(std::string operand1, std::string operand2, SyntaxNode* oper);
+	void performLogicOperatorChar(std::string operand1, std::string operand2, std::string *addresIndex, SyntaxNode *oper);
 	void invertLogicOperator(SyntaxNode *node);
 	void genPrint(SyntaxNode *node);
 	void genWhile(SyntaxNode *node);

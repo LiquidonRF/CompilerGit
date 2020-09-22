@@ -273,6 +273,7 @@ void CodeGen::genLogicOperator(std::string addresTrue, std::string addresFalse, 
 	}
 
 	bool isChar = false;
+	std::string addrIndex[2];
 	for (size_t i = 0; i < 2; i++)
 	{
 		if (oper->getChildren()->at(i)->getToken()->tokenClass == TokenClass::Identifier)
@@ -280,16 +281,15 @@ void CodeGen::genLogicOperator(std::string addresTrue, std::string addresFalse, 
 			if (oper->getChildren()->at(i)->getType() == SyntaxNodeType::STRLITERAL)
 			{
 				isChar = true;
-				std::string addrIndex;
 				if (oper->getChildren()->at(i)->getChildren()->at(0)->getToken()->tokenClass == TokenClass::Identifier)
 				{
-					addrIndex = getAddrFromVarTable(oper->getChildren()->at(i)->getChildren()->at(0));
+					addrIndex[i] = getAddrFromVarTable(oper->getChildren()->at(i)->getChildren()->at(0));
 				}
 				else {
-					addrIndex = "$" + oper->getChildren()->at(i)->getChildren()->at(0)->getToken()->lexema;
+					addrIndex[i] = "$" + oper->getChildren()->at(i)->getChildren()->at(0)->getToken()->lexema;
 				}
 
-				operands[i] = oper->getChildren()->at(i)->getToken()->lexema + "(," + addrIndex + ",1)";
+				operands[i] = oper->getChildren()->at(i)->getToken()->lexema + "(,%ebx,1)";
 			}
 			else {
 				operands[i] = getAddrFromVarTable(oper->getChildren()->at(i));
@@ -309,7 +309,7 @@ void CodeGen::genLogicOperator(std::string addresTrue, std::string addresFalse, 
 
 	if (isChar)
 	{
-		performLogicOperatorChar(operands[0], operands[1], oper);
+		performLogicOperatorChar(operands[0], operands[1], addrIndex, oper);
 	}
 	else {
 		performLogicOperator(operands[0], operands[1], oper);
@@ -359,9 +359,11 @@ void CodeGen::performLogicOperator(std::string operand1, std::string operand2, S
 	}
 }
 
-void CodeGen::performLogicOperatorChar(std::string operand1, std::string operand2, SyntaxNode *oper)
+void CodeGen::performLogicOperatorChar(std::string operand1, std::string operand2, std::string *addresIndex, SyntaxNode *oper)
 {
+	m_dotText->push_back("\t\tmovl    " + addresIndex[0] + ", %ebx\n");
 	m_dotText->push_back("\t\tmovb    " + operand1 + ", %ah\n");
+	m_dotText->push_back("\t\tmovl    " + addresIndex[1] + ", %ebx\n");
 	m_dotText->push_back("\t\tmovb    " + operand2 + ", %dh\n");
 	m_dotText->push_back("\t\tcmpb    %ah, %dh\n");
 

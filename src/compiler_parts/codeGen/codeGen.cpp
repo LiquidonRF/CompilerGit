@@ -218,13 +218,13 @@ void CodeGen::performUnaryOperator(std::string operand1, std::string operand2, S
 	}
 	else if (oper->getType() == SyntaxNodeType::MUL)
 	{
-		m_dotText->push_back("\t\tmull    " + operand2 + "\n");
+		m_dotText->push_back("\t\tmull    " + operand2 + ", %eax\n");
 		m_dotText->push_back("\t\tmovl    %eax, " + operand1 + "\n");
 	}
 	else if (oper->getType() == SyntaxNodeType::DIV)
 	{
 		m_dotText->push_back("\t\tcltd\n");
-		m_dotText->push_back("\t\tidivl    " + operand2 + "\n");
+		m_dotText->push_back("\t\tidivl    " + operand2 + ", %eax\n");
 		m_dotText->push_back("\t\tmovl    %eax, " + operand1 + "\n");
 	}
 }

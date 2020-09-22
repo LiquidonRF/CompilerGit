@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <unordered_map>
 #include "../lexer/lexer.h"

@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
 	CodeGen codeGen;
 	codeGen.init(parser.getSyntaxTreeRoot());
 	codeGen.start();
-	codeGen.dumpAsm();
 
 	for (size_t iter = 1; iter < argc; iter++)
 	{

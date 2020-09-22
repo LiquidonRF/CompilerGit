@@ -17,3 +17,6 @@ codeGen.o: src/compiler_parts/codeGen/codeGen.cpp
 	
 rm: 
 	rm *.o
+	rm g++ -c src/compiler_parts/lexer/*.gch
+	rm g++ -c src/compiler_parts/parser/*.gch
+	rm g++ -c src/compiler_parts/codeGen/*.gch

@@ -112,6 +112,8 @@ void CodeGen::genAssign(SyntaxNode *node)
 		{
 			m_dotText->push_back("\t\tmovl    ");
 			m_dotText->push_back(getAddrFromVarTable(node->getChildren()->at(1)));
+			m_dotText->push_back(", %eax\n");
+			m_dotText->push_back("\t\tmovl    %eax");
 			m_dotText->push_back(", " + getAddrFromVarTable(node->getChildren()->at(0)) + "\n");
 		}
 		else if (node->getChildren()->at(1)->getToken()->tokenClass == TokenClass::UnaryOperator)

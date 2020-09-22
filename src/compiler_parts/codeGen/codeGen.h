@@ -46,6 +46,7 @@ private:
 	void invertLogicOperator(SyntaxNode *node);
 	void genPrint(SyntaxNode *node);
 	void genWhile(SyntaxNode *node);
+	void dumpAsmToFile();
 
 public:
 	std::vector<std::string> *getDotData() { return m_dotData; }

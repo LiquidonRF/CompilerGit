@@ -402,25 +402,38 @@ void CodeGen::genWhile(SyntaxNode *node)
 
 void CodeGen::dumpAsm()
 {
-	std::ofstream outf("assembler.s");
-
-	if (!outf)
-	{
-		std::cerr << "Uh oh, SomeText.txt could not be opened for writing!" << std::endl;
-		exit(1);
-	}
-
 	auto iter = m_dotData->begin();
 	for (; iter != m_dotData->end(); iter++)
 	{
 		std::cout << *iter;
-		outf << *iter;
 	}
 
 	auto iter2 = m_dotText->begin();
 	for (; iter2 != m_dotText->end(); iter2++)
 	{
 		std::cout << *iter2;
+	}
+}
+
+void CodeGen::dumpAsmToFile()
+{
+	std::ofstream outf("assembler.s");
+
+	if (!outf)
+	{
+		std::cerr << "Uh oh, assembler.s could not be opened for writing!" << std::endl;
+		exit(1);
+	}
+
+	auto iter = m_dotData->begin();
+	for (; iter != m_dotData->end(); iter++)
+	{
+		outf << *iter;
+	}
+
+	auto iter2 = m_dotText->begin();
+	for (; iter2 != m_dotText->end(); iter2++)
+	{
 		outf << *iter2;
 	}
 }

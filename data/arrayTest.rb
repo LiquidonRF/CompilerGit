@@ -1,4 +1,4 @@
-array = [2, 5, 3]
+array = [2, 6, 3]
 
 a = array[0] + array[2]
 

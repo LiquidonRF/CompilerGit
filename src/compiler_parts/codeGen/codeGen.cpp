@@ -203,6 +203,12 @@ void CodeGen::genUnaryOperator(std::string addres, SyntaxNode *oper)
 
 void CodeGen::performUnaryOperator(std::string operand1, std::string operand2, SyntaxNode *oper)
 {
+	if (operand2[0] == '$')
+	{
+		m_dotText->push_back("\t\tmovl    " + operand2 + ", -" + std::to_string(m_countRBP + 4) + "(%rbp)\n");
+		operand2 = "-" + std::to_string(m_countRBP + 4) + "(%rbp)";
+	}
+
 	if (oper->getType() == SyntaxNodeType::MOD)
 	{
 		m_dotText->push_back("\t\tcltd\n");
@@ -221,13 +227,13 @@ void CodeGen::performUnaryOperator(std::string operand1, std::string operand2, S
 	}
 	else if (oper->getType() == SyntaxNodeType::MUL)
 	{
-		m_dotText->push_back("\t\tmull    " + operand2 + ", %eax\n");
+		m_dotText->push_back("\t\tmull    " + operand2 + "\n");
 		m_dotText->push_back("\t\tmovl    %eax, " + operand1 + "\n");
 	}
 	else if (oper->getType() == SyntaxNodeType::DIV)
 	{
 		m_dotText->push_back("\t\tcltd\n");
-		m_dotText->push_back("\t\tidivl    " + operand2 + ", %eax\n");
+		m_dotText->push_back("\t\tidivl    " + operand2 + "\n");
 		m_dotText->push_back("\t\tmovl    %eax, " + operand1 + "\n");
 	}
 }

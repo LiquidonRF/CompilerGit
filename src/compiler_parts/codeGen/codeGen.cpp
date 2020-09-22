@@ -53,6 +53,8 @@ void CodeGen::start()
 
 	m_dotText->push_back(".LC0:\n");
 	m_dotText->push_back("\t\t.string \"%d\\n\"\n");
+
+	dumpAsmToFile();
 }
 
 void CodeGen::generate(SyntaxNode *node)
@@ -84,9 +86,18 @@ void CodeGen::genAssign(SyntaxNode *node)
 {
 	if (!haveInVarTable(node->getChildren()->at(0)))
 	{
-		m_countRBP += 4;
-		m_varTable->insert({ node->getChildren()->at(0)->getToken()->lexema,
-					"-" + std::to_string(m_countRBP) + "(%rbp)" });
+		if (node->getChildren()->at(0)->getType() == SyntaxNodeType::STRLITERAL)
+		{
+			m_dotData->push_back(node->getChildren()->at(0)->getToken()->lexema + ":\n");
+			m_dotData->push_back("\t\t.string \"" + node->getChildren()->at(1)->getToken()->lexema + "\"\n");
+			m_varTable->insert({ node->getChildren()->at(0)->getToken()->lexema, 
+				std::to_string(node->getChildren()->at(1)->getToken()->lexema.size() - 2) });
+		}
+		else {
+			m_countRBP += 4;
+			m_varTable->insert({ node->getChildren()->at(0)->getToken()->lexema,
+						"-" + std::to_string(m_countRBP) + "(%rbp)" });
+		}
 	}
 	
 	if (node->getChildren()->at(0)->getType() == SyntaxNodeType::NUMBER)
@@ -261,11 +272,28 @@ void CodeGen::genLogicOperator(std::string addresTrue, std::string addresFalse, 
 		return;
 	}
 
+	bool isChar = false;
 	for (size_t i = 0; i < 2; i++)
 	{
 		if (oper->getChildren()->at(i)->getToken()->tokenClass == TokenClass::Identifier)
 		{
-			operands[i] = getAddrFromVarTable(oper->getChildren()->at(i));
+			if (oper->getChildren()->at(i)->getType() == SyntaxNodeType::STRLITERAL)
+			{
+				isChar = true;
+				std::string addrIndex;
+				if (oper->getChildren()->at(i)->getChildren()->at(0)->getToken()->tokenClass == TokenClass::Identifier)
+				{
+					addrIndex = getAddrFromVarTable(oper->getChildren()->at(i)->getChildren()->at(0));
+				}
+				else {
+					addrIndex = "$" + oper->getChildren()->at(i)->getChildren()->at(0)->getToken()->lexema;
+				}
+
+				operands[i] = oper->getChildren()->at(i)->getToken()->lexema + "(," + addrIndex + ",1)";
+			}
+			else {
+				operands[i] = getAddrFromVarTable(oper->getChildren()->at(i));
+			}
 		}
 		else {
 			operands[i] = "$" + oper->getChildren()->at(i)->getToken()->lexema;
@@ -278,7 +306,14 @@ void CodeGen::genLogicOperator(std::string addresTrue, std::string addresFalse, 
 	}
 
 	invertLogicOperator(oper);
-	performLogicOperator(operands[0], operands[1], oper);
+
+	if (isChar)
+	{
+		performLogicOperatorChar(operands[0], operands[1], oper);
+	}
+	else {
+		performLogicOperator(operands[0], operands[1], oper);
+	}
 	m_dotText->push_back(addresFalse + "\n");
 	if (!isWhile)
 		m_dotText->push_back("\t\tjmp    " + addresTrue + "\n");
@@ -320,6 +355,38 @@ void CodeGen::performLogicOperator(std::string operand1, std::string operand2, S
 	{
 		m_dotText->push_back("\t\tmovl    " + operand1 + ", %eax\n");
 		m_dotText->push_back("\t\tcmpl    " + operand2 + ", %eax\n");
+		m_dotText->push_back("\t\tjbe    ");
+	}
+}
+
+void CodeGen::performLogicOperatorChar(std::string operand1, std::string operand2, SyntaxNode *oper)
+{
+	m_dotText->push_back("\t\tmovb    " + operand1 + ", %ah\n");
+	m_dotText->push_back("\t\tmovb    " + operand2 + ", %dh\n");
+	m_dotText->push_back("\t\tcmpb    %ah, %dh\n");
+
+	if (oper->getType() == SyntaxNodeType::EQUAL)
+	{
+		m_dotText->push_back("\t\tje    ");
+	}
+	else if (oper->getType() == SyntaxNodeType::NOTEQUAL)
+	{
+		m_dotText->push_back("\t\tjne    ");
+	}
+	else if (oper->getType() == SyntaxNodeType::MORE)
+	{
+		m_dotText->push_back("\t\tja    ");
+	}
+	else if (oper->getType() == SyntaxNodeType::MOREEQUAL)
+	{
+		m_dotText->push_back("\t\tjae    ");
+	}
+	else if (oper->getType() == SyntaxNodeType::LESS)
+	{
+		m_dotText->push_back("\t\tjb    ");
+	}
+	else if (oper->getType() == SyntaxNodeType::LESSEQUAL)
+	{
 		m_dotText->push_back("\t\tjbe    ");
 	}
 }

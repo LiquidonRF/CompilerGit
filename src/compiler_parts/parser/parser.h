@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <unordered_map>
 #include "../lexer/lexer.h"
@@ -27,6 +28,7 @@ public:
 	size_t getLevel();
 	void setLevel(size_t newLevel);
 	SyntaxNode *getParent();
+	void setParent(SyntaxNode *node);
 	std::vector<SyntaxNode*>* getChildren();
 	void addChild(SyntaxNode* child);
 	SyntaxNode *getChild(SyntaxNode *child);

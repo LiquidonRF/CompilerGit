@@ -32,7 +32,7 @@ void Lexer::initRules()
 	m_rules.push_back(rule);
 
 	rule.type = TokenClass::Separator;
-	rule.regular = "(\\n)";
+	rule.regular = "\n";
 	m_rules.push_back(rule);
 
 	rule.type = TokenClass::Comma;
@@ -40,7 +40,7 @@ void Lexer::initRules()
 	m_rules.push_back(rule);
 
 	rule.type = TokenClass::IgnoredSeparators;
-	rule.regular = "(\\r|\\s|\\t)";
+	rule.regular = "(\\r\\n|\\r|\\s|\\t)";
 	m_rules.push_back(rule);
 
 	rule.type = TokenClass::LBracket;
@@ -193,7 +193,7 @@ void Lexer::printTokenList()
 
 	while (iter != m_tokenList->end())
 	{
-        std::cout << getTokenTypeString(iter->tokenClass) << "\t" << iter->lexema << std::endl;
+		std::cout << getTokenTypeString(iter->tokenClass) << "\t" << iter->lexema << std::endl;
 		++iter;
 	}
 }

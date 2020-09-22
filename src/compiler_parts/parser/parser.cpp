@@ -30,6 +30,11 @@ SyntaxNode* SyntaxNode::getParent()
 	return m_parent;
 }
 
+void SyntaxNode::setParent(SyntaxNode *node)
+{
+	m_parent = node;
+}
+
 std::vector<SyntaxNode*>* SyntaxNode::getChildren()
 {
 	return m_children;
@@ -243,8 +248,11 @@ SyntaxNode *Parser::parseWhile()
 	node->addChild(new SyntaxNode(SyntaxNodeType::DO, m_currToken, m_currLevel - 1));
 	nextToken();
 
-	SyntaxNode *tmp = parseMain();
-	node->getChildren()->back()->addChild(tmp);
+	while (m_currToken->tokenClass != TokenClass::KeyWordEnd)
+	{
+		SyntaxNode *tmp = parseMain();
+		node->getChildren()->back()->addChild(tmp);
+	}
 
 	checkTokenType(TokenClass::KeyWordEnd);
 	nextToken();
@@ -263,17 +271,24 @@ SyntaxNode *Parser::parseIf()
 	checkTokenType(TokenClass::KeyWordDo);
 	node->addChild(new SyntaxNode(SyntaxNodeType::DO, m_currToken, m_currLevel - 1));
 	nextToken();
-
-	SyntaxNode* tmp = parseMain();
-	node->getChildren()->back()->addChild(tmp);
+	SyntaxNode *tmp = NULL;
+	while (m_currToken->tokenClass != TokenClass::KeyWordElse &&
+		m_currToken->tokenClass != TokenClass::KeyWordEnd)
+	{
+		tmp = parseMain();
+		node->getChildren()->back()->addChild(tmp);
+	}
 
 	if (m_currToken->tokenClass == TokenClass::KeyWordElse)
 	{
 		node->addChild(new SyntaxNode(SyntaxNodeType::ELSE, m_currToken, m_currLevel - 1));
 		nextToken();
 
-		tmp = parseMain();
-		node->getChildren()->back()->addChild(tmp);
+		while (m_currToken->tokenClass != TokenClass::KeyWordEnd)
+		{
+			tmp = parseMain();
+			node->getChildren()->back()->addChild(tmp);
+		}
 	}
 
 	checkTokenType(TokenClass::KeyWordEnd);
@@ -327,6 +342,58 @@ SyntaxNode *Parser::parseExpr()
 			statePart = new SyntaxNode(statementType, m_currToken, m_currLevel);
 			node = parseLogicOperator(localRoot, statePart, statementClass, statementType);
 		}
+		else if (identType == SyntaxNodeType::ARRAY)
+		{
+			statePart = new SyntaxNode(statementType, m_currToken, m_currLevel);
+			identType = m_IdentifierTable->find(m_currToken->lexema)->second->getChildren()->at(0)->getType();
+
+			nextToken();
+			checkTokenType(TokenClass::LSquareBracket);
+
+			nextToken();
+			checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
+			statePart->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
+
+			if (identType == SyntaxNodeType::NUMBER)
+			{
+				statementClass = TokenClass::IntLiteral;
+				statementType = SyntaxNodeType::NUMBER;
+			}
+			else if (identType == SyntaxNodeType::FLOAT)
+			{
+				statementClass = TokenClass::FloatLiteral;
+				statementType = SyntaxNodeType::FLOAT;
+			}
+			statePart->setType(statementType);
+
+			nextToken();
+			checkTokenType(TokenClass::RSquareBracket);
+
+			node = parseLogicOperator(localRoot, statePart, statementClass, statementType);
+			break;
+		}
+		else if (identType == SyntaxNodeType::STRLITERAL)
+		{
+			statePart = new SyntaxNode(statementType, m_currToken, m_currLevel);
+
+			nextToken();
+			checkTokenType(TokenClass::LSquareBracket);
+
+			nextToken();
+			checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
+			statePart->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
+
+			statementClass = TokenClass::String;
+			statementType = SyntaxNodeType::STRLITERAL;
+
+			statePart->setType(statementType);
+
+			nextToken();
+			checkTokenType(TokenClass::RSquareBracket);
+
+			node = parseLogicOperator(localRoot, statePart, statementClass, statementType);
+			break;
+		}
 		break;
 	default:
 		assert(false && "Expected int, float, ident in statement");
@@ -371,6 +438,25 @@ SyntaxNode *Parser::parseLogicOperator(SyntaxNode* localRoot, SyntaxNode* identi
 			nextToken();
 			checkForParseOperator(statementClass, statementType);
 
+			if (getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::ARRAY ||
+				getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::STRLITERAL)
+			{
+				localRoot->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
+				nextToken();
+				checkTokenType(TokenClass::LSquareBracket);
+				nextToken();
+				checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
+				localRoot->getChildren()->back()->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
+				nextToken();
+				checkTokenType(TokenClass::RSquareBracket);
+
+				SyntaxNode* tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back(), statementClass, statementType);
+				if (tmp != NULL)
+					localRoot = tmp;
+
+				return localRoot;
+			} 
+
 			localRoot->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
 			SyntaxNode *tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back(), statementClass, statementType);
 			if (tmp != NULL)
@@ -389,6 +475,25 @@ SyntaxNode *Parser::parseLogicOperator(SyntaxNode* localRoot, SyntaxNode* identi
 				nextToken();
 				checkForParseOperator(statementClass, statementType);
 
+				if (getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::ARRAY ||
+					getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::STRLITERAL)
+				{
+					localRoot->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
+					nextToken();
+					checkTokenType(TokenClass::LSquareBracket);
+					nextToken();
+					checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
+					localRoot->getChildren()->back()->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
+					nextToken();
+					checkTokenType(TokenClass::RSquareBracket);
+
+					SyntaxNode* tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back(), statementClass, statementType);
+					if (tmp != NULL)
+						localRoot = tmp;
+
+					return localRoot;
+				}
+
 				localRoot->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
 				SyntaxNode* tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back(), statementClass, statementType);
 				if (tmp != NULL)
@@ -404,6 +509,25 @@ SyntaxNode *Parser::parseLogicOperator(SyntaxNode* localRoot, SyntaxNode* identi
 
 				nextToken();
 				checkForParseOperator(statementClass, statementType);
+
+				if (getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::ARRAY ||
+					getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::STRLITERAL)
+				{
+					localRoot->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
+					nextToken();
+					checkTokenType(TokenClass::LSquareBracket);
+					nextToken();
+					checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
+					localRoot->getChildren()->back()->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
+					nextToken();
+					checkTokenType(TokenClass::RSquareBracket);
+
+					tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back(), statementClass, statementType);
+					if (tmp != NULL)
+						localRoot = tmp;
+
+					return localRoot;
+				}
 
 				localRoot->getChildren()->back()->addChild(new SyntaxNode(statementType, m_currToken, m_currLevel));
 				tmp = parseLogicOperator(localRoot, localRoot->getChildren()->back()->getChildren()->back(), statementClass, statementType);
@@ -462,6 +586,7 @@ SyntaxNode *Parser::parseStatement(SyntaxNode *Identifier)
 		else if (identType == SyntaxNodeType::ARRAY) 
 		{
 			statePart = new SyntaxNode(statementType, m_currToken, m_currLevel);
+			identType = m_IdentifierTable->find(m_currToken->lexema)->second->getChildren()->at(0)->getType();
 
 			nextToken();
 			checkTokenType(TokenClass::LSquareBracket);
@@ -470,10 +595,6 @@ SyntaxNode *Parser::parseStatement(SyntaxNode *Identifier)
 			checkForParseOperator(TokenClass::IntLiteral, SyntaxNodeType::NUMBER);
 			statePart->addChild(new SyntaxNode(SyntaxNodeType::INDEX, m_currToken, m_currLevel));
 
-			if (!haveIdentInIdentTable(statePart->getToken()->lexema + "[" + m_currToken->lexema + "]"))
-				assert(false && "Not initialized identifier in array");
-
-			identType = getIdentTypeFromIdentTable(statePart->getToken()->lexema + "[" + m_currToken->lexema + "]");
 			if (identType == SyntaxNodeType::NUMBER)
 			{
 				statementClass = TokenClass::IntLiteral;
@@ -515,6 +636,15 @@ void Parser::checkForParseOperator(TokenClass statementClass, SyntaxNodeType sta
 	{
 		if (!haveIdentInIdentTable(m_currToken->lexema))
 			assert(false && "Not initialized identifier");
+
+		if (getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::ARRAY)
+		{
+			if (m_IdentifierTable->find(m_currToken->lexema)->second->getChildren()->at(0)->getType() != statementType)
+			{
+				assert(false && "Invalid identifier type");
+			}
+			return;
+		}
 
 		if (getIdentTypeFromIdentTable(m_currToken->lexema) != statementType)
 			assert(false && "Invalid identifier type");
@@ -679,7 +809,12 @@ SyntaxNode *Parser::parseAssignment(SyntaxNode *Identifier)
 		return parseArray(Identifier);
 	case TokenClass::String:
 		Identifier->setType(SyntaxNodeType::STRLITERAL);
+		Identifier->setParent(node);
 		node->addChild(Identifier);
+
+		m_currToken->lexema.erase(0, 1);
+		m_currToken->lexema.erase(m_currToken->lexema.size() - 1, 1);
+
 		node->addChild(new SyntaxNode(SyntaxNodeType::STRLITERAL, m_currToken, m_currLevel, node));
 		nextToken();
 		checkTokenType(TokenClass::Separator);
@@ -689,6 +824,39 @@ SyntaxNode *Parser::parseAssignment(SyntaxNode *Identifier)
 		nextToken();
 		break;
 	default:
+		if (m_currToken->lexema == "len")
+		{
+			Identifier->setType(SyntaxNodeType::NUMBER);
+			node->addChild(Identifier);
+			nextToken();
+			checkTokenType(TokenClass::LBracket);
+			nextToken();
+			checkTokenType(TokenClass::Identifier);
+			if (!haveIdentInIdentTable(m_currToken->lexema))
+				assert(false && "Unknown identifier in len");
+			if (getIdentTypeFromIdentTable(m_currToken->lexema) != SyntaxNodeType::STRLITERAL &&
+				getIdentTypeFromIdentTable(m_currToken->lexema) != SyntaxNodeType::ARRAY)
+				assert(false && "Error identifier type in len");
+			
+			if (getIdentTypeFromIdentTable(m_currToken->lexema) == SyntaxNodeType::STRLITERAL)
+			{
+				size_t strLen = m_IdentifierTable->find(m_currToken->lexema)->second->getParent()->getChildren()->at(1)->getToken()->lexema.size();
+				Token* token = new Token();
+				token->lexema = std::to_string(strLen);
+				token->tokenClass = TokenClass::IntLiteral;
+				node->addChild(new SyntaxNode(SyntaxNodeType::NUMBER, token, m_currLevel, node));
+			}
+			nextToken();
+			checkTokenType(TokenClass::RBracket);
+			nextToken();
+			checkTokenType(TokenClass::Separator);
+			nextToken();
+
+			if (!haveIdentInIdentTable(Identifier->getToken()->lexema))
+				m_IdentifierTable->insert({ Identifier->getToken()->lexema, Identifier });
+
+			break;
+		}
 		node->addChild(Identifier);
 		node->addChild(parseStatement(Identifier));
 

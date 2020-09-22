@@ -18,7 +18,7 @@ while i < n do
 	end
 	
 	if m == count do
-		puts i
+		puts "is substring\n"
 		i = n
 	end
 

@@ -1,16 +1,19 @@
-all: make
+all: build rm
 
-make: main.o lexer.o parser.o godgen.o
-	g++ main.o lexer.o parser.o godgen.o -o exec
+build: main.o lexer.o parser.o codeGen.o
+	g++ main.o lexer.o parser.o codeGen.o -o exec
 
-main.o: main.cpp
+main.o: src/main.cpp
 	g++ -c src/main.cpp
 
-lexer.o: lexer.cpp
-	g++ -c src\compiler_parts\lexer\lexer.cpp
+lexer.o: src/compiler_parts/lexer/lexer.cpp
+	g++ -c src/compiler_parts/lexer/lexer.cpp src/compiler_parts/lexer/lexer.h
 
-parser.o: parser.cpp
-	g++ -c src\compiler_parts\parser\parser.cpp
+parser.o: src/compiler_parts/parser/parser.cpp
+	g++ -c src/compiler_parts/parser/parser.cpp src/compiler_parts/parser/parser.h
 
-lexer.o: codeGen.cpp
-	g++ -c src\compiler_parts\codeGen\codeGen.cpp
+codeGen.o: src/compiler_parts/codeGen/codeGen.cpp
+	g++ -c src/compiler_parts/codeGen/codeGen.cpp src/compiler_parts/codeGen/codeGen.h
+	
+rm: 
+	rm *.o

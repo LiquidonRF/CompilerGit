@@ -1,4 +1,3 @@
-#pragma once
 #include "../parser/parser.h"
 #include <map>
 

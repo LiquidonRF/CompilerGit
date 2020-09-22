@@ -1,11 +1,10 @@
-#pragma once
 #include <iostream>
 #include <unordered_map>
 #include "../lexer/lexer.h"
 #include <cstddef>
 #include <algorithm>
 #include <vector>
-#include <vector>
+#include <list>
 
 enum class SyntaxNodeType {
 	PROGRAM, NUMBER, FLOAT, ID, ASSIGN, IF, ELSE,

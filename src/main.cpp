@@ -1,15 +1,13 @@
 ﻿#include <iostream>
-#include "compiler_parts/lexer/lexer.h"
-#include "compiler_parts/parser/parser.h"
 #include "compiler_parts/codeGen/codeGen.h"
 
 int main(int argc, char* argv[])
 {
-	std::string fileName = "../data/NOD.rb";
+	std::string fileName = "data/NOD.rb";
 
 	Lexer lexer;
 	lexer.readText(fileName);
-	//lexer.printTokenList();
+	lexer.printTokenList();
 
 	Parser parser(&lexer);
 	parser.start();

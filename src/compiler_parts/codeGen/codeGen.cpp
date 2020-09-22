@@ -183,7 +183,10 @@ void CodeGen::genUnaryOperator(std::string addres, SyntaxNode *oper)
 		else {
 			operands[i] = "$" + oper->getChildren()->at(i)->getToken()->lexema;
 		}
+	}
 
+	for (size_t i = 0; i < 2; i++)
+	{
 		if (oper->getChildren()->at(i)->getToken()->tokenClass == TokenClass::UnaryOperator)
 		{
 			genUnaryOperator(addres, oper->getChildren()->at(i));

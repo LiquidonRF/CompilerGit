@@ -1,3 +1,4 @@
+#pragma once
 #include "../parser/parser.h"
 #include <map>
 
@@ -31,7 +32,7 @@ private:
 	std::unordered_map<std::string, std::string> *m_varTable = new std::unordered_map<std::string, std::string>();
 	std::unordered_map<std::string, std::string> *m_LC = new std::unordered_map<std::string, std::string>();
 
-	size_t m_varsInStack = 0;
+	size_t m_countStr = 0;
 	size_t m_countLC = 0;
 	size_t m_countRBP = 0;
 

@@ -446,6 +446,16 @@ void CodeGen::genPrint(SyntaxNode *node)
 		m_dotText->push_back("\t\tmovl    $0, %eax\n");
 		m_dotText->push_back("\t\tcall    printf\n");
 	}
+	if (node->getChildren()->at(0)->getType() == SyntaxNodeType::STRLITERAL)
+	{
+		std::string strNum = "s" + std::to_string(m_countStr);
+		m_dotData->push_back(strNum + ":\n");
+		m_dotData->push_back("\t\t.string " + node->getChildren()->at(0)->getToken()->lexema + "\n");
+
+		m_dotText->push_back("\t\tmovl    $" + strNum + ", %edi\n");
+		m_dotText->push_back("\t\tmovl    $0, %eax\n");
+		m_dotText->push_back("\t\tcall    printf\n");
+	}
 }
 
 void CodeGen::genWhile(SyntaxNode *node)

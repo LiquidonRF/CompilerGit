@@ -163,8 +163,16 @@ SyntaxNode *Parser::parseMain()
 	case TokenClass::Output:
 		node = new SyntaxNode(SyntaxNodeType::PRINT, m_currToken, m_currLevel);
 		nextToken();
-		node->addChild(parseStatement(node));
-		node->setType(SyntaxNodeType::PRINT);
+		if (m_currToken->tokenClass == TokenClass::String)
+		{
+			node->addChild(new SyntaxNode(SyntaxNodeType::STRLITERAL, m_currToken, m_currLevel));
+			nextToken();
+			checkTokenType(TokenClass::Separator);
+		}
+		else {
+			node->addChild(parseStatement(node));
+			node->setType(SyntaxNodeType::PRINT);
+		}
 		break;
 	case TokenClass::Separator:
 		nextToken();
